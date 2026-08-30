@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Counter — Shop Billing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --paper:#FAF7F0;
+    --paper-dim:#F1ECDF;
+    --ink:#1F2A24;
+    --ink-soft:#5C6B62;
+    --line:#D9D2C2;
+    --emerald:#0F6B4C;
+    --emerald-dark:#0B5039;
+    --amber:#C98A2C;
+    --amber-bg:#F7EBD6;
+    --danger:#B4432F;
+    --danger-bg:#F6E4DF;
+    --card:#FFFFFF;
+    --radius:10px;
+    --shadow: 0 1px 2px rgba(31,42,36,0.06), 0 4px 14px rgba(31,42,36,0.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .num{font-family:'IBM Plex Mono', monospace;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select{font-family:inherit;}
+
+  #app{display:flex;flex-direction:column;min-height:100vh;}
+
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 22px;border-bottom:1px solid var(--line);
+    background:var(--paper);position:sticky;top:0;z-index:20;gap:14px;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{
+    width:34px;height:34px;border-radius:8px;background:var(--emerald);
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    font-weight:800;font-size:15px;letter-spacing:-0.5px;flex-shrink:0;
+  }
+  .brand-name{font-weight:800;font-size:16px;letter-spacing:-0.2px;}
+  .brand-sub{font-size:11px;color:var(--ink-soft);margin-top:-2px;}
+
+  .topbar-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .live-dot{
+    display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--emerald-dark);
+    background:#E7F3EC;padding:5px 10px;border-radius:20px;flex-shrink:0;
+  }
+  .live-dot .dot{width:7px;height:7px;border-radius:50%;background:var(--emerald);animation:pulse 1.6s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(15,107,76,.5);}50%{opacity:.6;box-shadow:0 0 0 4px rgba(15,107,76,0);}}
+
+  .tabs{display:flex;gap:4px;background:var(--paper-dim);padding:4px;border-radius:10px;overflow-x:auto;max-width:100%;}
+  .tab{
+    padding:8px 14px;border:none;background:transparent;border-radius:7px;white-space:nowrap;
+    font-size:13px;font-weight:600;color:var(--ink-soft);transition:all .15s;
+  }
+  .tab.active{background:var(--card);color:var(--ink);box-shadow:var(--shadow);}
+  .tab:hover:not(.active){color:var(--ink);}
+
+  .settings-btn{
+    width:34px;height:34px;border-radius:8px;border:1px solid var(--line);
+    background:var(--card);display:flex;align-items:center;justify-content:center;
+    color:var(--ink-soft);flex-shrink:0;
+  }
+  .settings-btn:hover{color:var(--ink);border-color:var(--ink-soft);}
+
+  main{flex:1;padding:20px 22px 40px;max-width:1400px;width:100%;margin:0 auto;}
+
+  .billing-grid{display:grid;grid-template-columns:1fr 400px;gap:18px;align-items:start;}
+  @media (max-width:900px){.billing-grid{grid-template-columns:1fr;}}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);}
+  .panel-pad{padding:16px;}
+
+  .search-row{display:flex;gap:10px;margin-bottom:14px;}
+  .search-input{
+    flex:1;padding:11px 14px;border:1px solid var(--line);border-radius:8px;
+    font-size:14px;background:var(--paper);outline:none;
+  }
+  .search-input:focus{border-color:var(--emerald);}
+
+  .item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+  .item-card{
+    border:1px solid var(--line);border-radius:9px;padding:12px;background:var(--paper);
+    text-align:left;transition:all .12s;position:relative;overflow:hidden;
+  }
+  .item-card:hover{border-color:var(--emerald);transform:translateY(-1px);box-shadow:var(--shadow);}
+  .item-card:disabled{opacity:.45;cursor:not-allowed;}
+  .item-card:disabled:hover{transform:none;border-color:var(--line);}
+  .item-name{font-weight:600;font-size:13.5px;line-height:1.3;margin-bottom:6px;min-height:35px;}
+  .item-price{font-size:15px;font-weight:700;color:var(--emerald-dark);}
+  .item-stock{font-size:11px;color:var(--ink-soft);margin-top:4px;}
+  .item-stock.low{color:var(--danger);font-weight:600;}
+
+  .empty-state{text-align:center;padding:50px 20px;color:var(--ink-soft);}
+  .empty-state svg{margin-bottom:10px;opacity:.5;}
+  .empty-state p{font-size:13.5px;margin:4px 0;}
+
+  .cart-header{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0;}
+  .cart-title{font-weight:700;font-size:15px;}
+  .cart-count{font-size:12px;color:var(--ink-soft);}
+  .cart-items{max-height:280px;overflow-y:auto;padding:10px 16px;}
+  .cart-line{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--paper-dim);}
+  .cart-line-info{flex:1;min-width:0;}
+  .cart-line-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cart-line-price{font-size:11.5px;color:var(--ink-soft);}
+  .qty-control{display:flex;align-items:center;gap:6px;}
+  .qty-btn{
+    width:22px;height:22px;border-radius:6px;border:1px solid var(--line);background:var(--card);
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);
+  }
+  .qty-btn:hover{border-color:var(--emerald);color:var(--emerald);}
+  .qty-val{width:22px;text-align:center;font-size:13px;font-weight:600;}
+  .line-total{width:64px;text-align:right;font-size:13px;font-weight:700;}
+  .remove-btn{color:var(--danger);opacity:.6;font-size:12px;border:none;background:none;padding:2px 4px;}
+  .remove-btn:hover{opacity:1;}
+  .cart-empty{padding:30px 16px;text-align:center;color:var(--ink-soft);font-size:13px;}
+
+  .cart-footer{border-top:1px solid var(--line);padding:14px 16px;}
+  .field-row{display:flex;gap:8px;margin-bottom:8px;}
+  .field-row input, .field-row select{
+    flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:7px;font-size:13px;background:var(--paper);
+  }
+  .field-label{font-size:11px;font-weight:600;color:var(--ink-soft);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.3px;}
+  .totals{margin-top:10px;font-size:13px;}
+  .totals-row{display:flex;justify-content:space-between;padding:3px 0;color:var(--ink-soft);}
+  .totals-row.grand{
+    color:var(--ink);font-weight:800;font-size:18px;padding-top:8px;margin-top:6px;
+    border-top:1px dashed var(--line);
+  }
+  .totals-row.due{color:var(--danger);font-weight:700;}
+  .generate-btn{
+    width:100%;padding:13px;background:var(--emerald);color:#fff;border:none;border-radius:9px;
+    font-weight:700;font-size:14.5px;margin-top:12px;transition:background .15s;
+  }
+  .generate-btn:hover:not(:disabled){background:var(--emerald-dark);}
+  .generate-btn:disabled{background:var(--line);color:var(--ink-soft);cursor:not-allowed;}
+  .clear-btn{width:100%;padding:8px;background:none;border:none;color:var(--ink-soft);font-size:12px;margin-top:6px;}
+  .clear-btn:hover{color:var(--danger);}
+
+  .inv-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
+  .primary-btn{
+    padding:10px 18px;background:var(--emerald);color:#fff;border:none;border-radius:8px;
+    font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:6px;
+  }
+  .primary-btn:hover{background:var(--emerald-dark);}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{
+    text-align:left;padding:10px 12px;color:var(--ink-soft);font-weight:600;font-size:11.5px;
+    text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--paper-dim);}
+  tr:last-child td{border-bottom:none;}
+  .stock-badge{
+    display:inline-block;padding:2px 8px;border-radius:20px;font-size:11.5px;font-weight:600;
+    background:var(--paper-dim);color:var(--ink-soft);
+  }
+  .stock-badge.low{background:var(--danger-bg);color:var(--danger);}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+  .badge.paid{background:#E7F3EC;color:var(--emerald-dark);}
+  .badge.due{background:var(--danger-bg);color:var(--danger);}
+  .badge.partial{background:var(--amber-bg);color:var(--amber);}
+  .icon-btn{border:none;background:none;color:var(--ink-soft);padding:5px 8px;border-radius:6px;font-size:12.5px;font-weight:600;}
+  .icon-btn:hover{background:var(--paper-dim);color:var(--ink);}
+  .icon-btn.danger:hover{background:var(--danger-bg);color:var(--danger);}
+
+  .bill-card{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--paper-dim);gap:10px;}
+  .bill-card:hover{background:var(--paper-dim);cursor:pointer;}
+  .bill-id{font-weight:700;font-size:14px;}
+  .bill-meta{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .bill-amt{font-weight:700;font-size:15px;color:var(--emerald-dark);text-align:right;}
+
+  .cust-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--paper-dim);gap:10px;}
+  .cust-row:hover{background:var(--paper-dim);cursor:pointer;}
+  .cust-name{font-weight:700;font-size:14px;}
+  .cust-meta{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .cust-balance{font-weight:700;font-size:15px;text-align:right;}
+  .cust-balance.zero{color:var(--ink-soft);}
+  .cust-balance.due{color:var(--danger);}
+
+  .exp-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--paper-dim);gap:10px;}
+  .exp-cat{font-weight:600;font-size:13.5px;}
+  .exp-meta{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .exp-amt{font-weight:700;font-size:14px;color:var(--danger);}
+
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(31,42,36,0.45);display:flex;align-items:center;justify-content:center;
+    z-index:100;padding:20px;
+  }
+  .modal{
+    background:var(--card);border-radius:12px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,0.25);
+    max-height:90vh;overflow-y:auto;
+  }
+  .modal-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+  .modal-head h3{margin:0;font-size:16px;}
+  .modal-close{border:none;background:none;font-size:20px;color:var(--ink-soft);line-height:1;padding:2px;}
+  .modal-body{padding:20px;}
+  .form-group{margin-bottom:14px;}
+  .form-group label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;}
+  .form-group input, .form-group select{
+    width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:var(--paper);
+  }
+  .form-group input:focus, .form-group select:focus{outline:none;border-color:var(--emerald);}
+  .form-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .form-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .modal-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;}
+  .btn-secondary{padding:9px 16px;border:1px solid var(--line);background:var(--card);border-radius:8px;font-size:13px;font-weight:600;color:var(--ink);}
+  .btn-secondary:hover{border-color:var(--ink-soft);}
+  .hint{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+
+  #receipt-view{
+    max-width:360px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:8px;
+    padding:22px 20px;box-shadow:var(--shadow);
+  }
+  .receipt-head{text-align:center;border-bottom:1px dashed var(--ink-soft);padding-bottom:12px;margin-bottom:12px;}
+  .receipt-shop{font-weight:800;font-size:16px;}
+  .receipt-addr{font-size:11px;color:var(--ink-soft);margin-top:3px;line-height:1.4;}
+  .receipt-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-soft);margin-bottom:6px;}
+  .receipt-table{width:100%;font-size:11.5px;margin-bottom:10px;border-collapse:collapse;}
+  .receipt-table th{padding:4px 3px;border-bottom:1px solid var(--ink);font-size:9.5px;text-transform:none;letter-spacing:0;text-align:left;}
+  .receipt-table td{padding:4px 3px;border-bottom:none;font-size:11px;}
+  .receipt-table .rt-name{max-width:100px;}
+  .receipt-totals{border-top:1px dashed var(--ink-soft);padding-top:8px;font-size:12.5px;}
+  .receipt-totals .totals-row{padding:2px 0;}
+  .receipt-totals .grand{font-size:15px;border-top:1px dashed var(--ink-soft);display:flex;justify-content:space-between;}
+  .receipt-totals .due{color:var(--danger);font-weight:700;}
+  .receipt-foot{text-align:center;margin-top:14px;padding-top:10px;border-top:1px dashed var(--ink-soft);font-size:11px;color:var(--ink-soft);}
+  .receipt-actions{display:flex;gap:10px;max-width:360px;margin:14px auto 0;}
+
+  @media print{
+    body *{visibility:hidden;}
+    #receipt-view, #receipt-view *{visibility:visible;}
+    #receipt-view{position:absolute;top:0;left:0;box-shadow:none;border:none;max-width:100%;width:80mm;padding:8px 10px;}
+    .receipt-actions{display:none;}
+  }
+
+  .toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;
+    box-shadow:0 8px 24px rgba(0,0,0,0.2);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+
+  .section-title{font-size:15px;font-weight:700;margin:0 0 12px;}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
+  .stat-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;}
+  .stat-label{font-size:11.5px;color:var(--ink-soft);font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+  .stat-value{font-size:22px;font-weight:800;margin-top:6px;}
+  .stat-sub{font-size:11.5px;color:var(--ink-soft);margin-top:3px;}
+
+  .dash-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start;}
+  @media (max-width:900px){.dash-grid{grid-template-columns:1fr;}}
+
+  .rank-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--paper-dim);}
+  .rank-row:last-child{border-bottom:none;}
+  .rank-num{
+    width:22px;height:22px;border-radius:6px;background:var(--paper-dim);color:var(--ink-soft);
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;
+  }
+  .rank-info{flex:1;min-width:0;}
+  .rank-name{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .rank-meta{font-size:11px;color:var(--ink-soft);}
+  .rank-amt{font-size:13px;font-weight:700;color:var(--emerald-dark);}
+
+  .low-stock-row{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--paper-dim);}
+  .low-stock-row:last-child{border-bottom:none;}
+
+  .ledger-row{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--paper-dim);}
+  .ledger-row:last-child{border-bottom:none;}
+  .ledger-desc{font-size:13px;font-weight:600;}
+  .ledger-date{font-size:11px;color:var(--ink-soft);}
+  .ledger-amt.debit{color:var(--danger);font-weight:700;}
+  .ledger-amt.credit{color:var(--emerald-dark);font-weight:700;}
+
+  .upi-qr-box{display:flex;flex-direction:column;align-items:center;padding:10px 0;}
+  .upi-qr-box canvas, .upi-qr-box img{border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff;}
+  .upi-amount{font-size:22px;font-weight:800;margin-top:10px;}
+  .upi-payee{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .upi-qr-btn{
+    width:100%;padding:11px;background:#fff;color:var(--emerald-dark);border:1.5px solid var(--emerald);
+    border-radius:9px;font-weight:700;font-size:13.5px;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .upi-qr-btn:hover{background:#E7F3EC;}
+  .upi-qr-btn svg{flex-shrink:0;}
+
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ Storage ============ */
+const STORAGE_KEY = 'shop-data';
+let DATA = {
+  shop: { name: 'My Shop', address: '', gst: '', phone: '', gstEnabled: true, upiId: '' },
+  inventory: [],
+  customers: [],
+  bills: [],
+  payments: [],
+  expenses: [],
+  nextBillNo: 1
+};
+
+async function loadData(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, true);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      DATA = Object.assign({}, DATA, parsed);
+      DATA.customers = DATA.customers || [];
+      DATA.payments = DATA.payments || [];
+      DATA.expenses = DATA.expenses || [];
+    }
+  }catch(e){ console.log('No existing data found, starting fresh.'); }
+}
+async function saveData(){
+  try{ await window.storage.set(STORAGE_KEY, JSON.stringify(DATA), true); }
+  catch(e){ console.error('Storage save failed', e); showToast('Could not save — storage error'); }
+}
+
+/* ============ State ============ */
+let state = {
+  tab: 'dashboard',
+  cart: [],
+  search: '',
+  editingItem: null, showItemModal: false,
+  showSettingsModal: false,
+  customerId: '', amountReceived: '', paymentMode: 'Cash',
+  editingCustomer: null, showCustomerModal: false,
+  editingExpense: null, showExpenseModal: false,
+  payingCustomer: null, showPaymentModal: false, paymentAmount: '',
+  showUpiModal: false, upiContext: null,
+  viewingBill: null,
+  viewingCustomer: null,
+};
+
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function money(n){ return '₹' + (Math.round((n||0)*100)/100).toFixed(2); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ============ Derived helpers ============ */
+function customerBilled(id){ return DATA.bills.filter(b=>b.customerId===id).reduce((s,b)=>s+b.total,0); }
+function customerPaid(id){
+  const paidAtBilling = DATA.bills.filter(b=>b.customerId===id).reduce((s,b)=>s+(b.amountPaid||0),0);
+  const paidLater = DATA.payments.filter(p=>p.customerId===id).reduce((s,p)=>s+p.amount,0);
+  return paidAtBilling + paidLater;
+}
+function customerBalance(id){ return customerBilled(id) - customerPaid(id); }
+function totalOutstanding(){ return DATA.customers.reduce((s,c)=>s+customerBalance(c.id),0); }
+
+function isToday(ts){
+  if(!ts) return false;
+  const d = new Date(ts), now = new Date();
+  return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
+}
+
+/* ============ Render root ============ */
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${renderTopbar()}
+    <main>${renderTab()}</main>
+    ${state.showItemModal ? renderItemModal() : ''}
+    ${state.showSettingsModal ? renderSettingsModal() : ''}
+    ${state.showCustomerModal ? renderCustomerModal() : ''}
+    ${state.showExpenseModal ? renderExpenseModal() : ''}
+    ${state.showPaymentModal ? renderPaymentModal() : ''}
+    ${state.showUpiModal ? renderUpiModal() : ''}
+  `;
+  attachHandlers();
+  drawUpiQr();
+}
+
+function renderTopbar(){
+  return `
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">₹</div>
+      <div>
+        <div class="brand-name">${escapeHtml(DATA.shop.name || 'My Shop')}</div>
+        <div class="brand-sub">Billing &amp; accounts</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="tabs">
+        <button class="tab ${state.tab==='dashboard'?'active':''}" data-tab="dashboard">Dashboard</button>
+        <button class="tab ${state.tab==='billing'?'active':''}" data-tab="billing">Billing</button>
+        <button class="tab ${state.tab==='inventory'?'active':''}" data-tab="inventory">Inventory</button>
+        <button class="tab ${state.tab==='customers'?'active':''}" data-tab="customers">Customers</button>
+        <button class="tab ${state.tab==='expenses'?'active':''}" data-tab="expenses">Expenses</button>
+        <button class="tab ${state.tab==='history'?'active':''}" data-tab="history">History</button>
+      </div>
+      <div class="live-dot" title="Live — updates automatically"><span class="dot"></span>Live</div>
+      <button class="settings-btn" id="openSettings" title="Shop settings">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009.6 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 8.6a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>`;
+}
+
+function renderTab(){
+  if(state.viewingBill) return renderReceipt(state.viewingBill);
+  if(state.viewingCustomer) return renderCustomerLedger(state.viewingCustomer);
+  if(state.tab==='dashboard') return renderDashboard();
+  if(state.tab==='billing') return renderBilling();
+  if(state.tab==='inventory') return renderInventory();
+  if(state.tab==='customers') return renderCustomers();
+  if(state.tab==='expenses') return renderExpenses();
+  if(state.tab==='history') return renderHistory();
+}
+
+/* ---------- Dashboard ---------- */
+function renderDashboard(){
+  const todaysBills = DATA.bills.filter(b => isToday(b.timestamp));
+  const revenue = todaysBills.reduce((s,b)=> s + b.total, 0);
+  const billCount = todaysBills.length;
+  const itemsSold = todaysBills.reduce((s,b)=> s + b.items.reduce((a,l)=>a+l.qty,0), 0);
+  const todaysExpenses = DATA.expenses.filter(e=>isToday(e.timestamp)).reduce((s,e)=>s+e.amount,0);
+  const netToday = revenue - todaysExpenses;
+  const outstanding = totalOutstanding();
+
+  const salesByItem = {};
+  todaysBills.forEach(b => b.items.forEach(l=>{
+    if(!salesByItem[l.name]) salesByItem[l.name] = {name:l.name, qty:0, revenue:0};
+    salesByItem[l.name].qty += l.qty; salesByItem[l.name].revenue += l.price*l.qty;
+  }));
+  const topSellers = Object.values(salesByItem).sort((a,b)=>b.revenue-a.revenue).slice(0,6);
+  const lowStock = DATA.inventory.filter(it => it.stock <= 3).sort((a,b)=>a.stock-b.stock);
+
+  return `
+  <div class="section-title">Today's overview <span style="font-weight:500;font-size:12px;color:var(--ink-soft);">· ${new Date().toLocaleDateString('en-IN',{weekday:'long', day:'numeric', month:'long'})}</span></div>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value num">${money(revenue)}</div><div class="stat-sub">${billCount} bill${billCount!==1?'s':''}</div></div>
+    <div class="stat-card"><div class="stat-label">Expenses</div><div class="stat-value num">${money(todaysExpenses)}</div><div class="stat-sub">today</div></div>
+    <div class="stat-card"><div class="stat-label">Net (rev − exp)</div><div class="stat-value num">${money(netToday)}</div><div class="stat-sub">today</div></div>
+    <div class="stat-card"><div class="stat-label">Items sold</div><div class="stat-value num">${itemsSold}</div><div class="stat-sub">units today</div></div>
+    <div class="stat-card"><div class="stat-label">Outstanding dues</div><div class="stat-value num" style="color:${outstanding>0?'var(--danger)':'var(--ink)'};">${money(outstanding)}</div><div class="stat-sub">across all customers</div></div>
+  </div>
+  <div class="dash-grid">
+    <div class="panel">
+      <div style="padding:14px 16px;font-weight:700;font-size:14px;border-bottom:1px solid var(--line);">Top sellers today</div>
+      ${topSellers.length===0 ? `<div class="empty-state"><p>No sales yet today.</p></div>` :
+        topSellers.map((s,i)=>`
+          <div class="rank-row">
+            <div class="rank-num">${i+1}</div>
+            <div class="rank-info"><div class="rank-name">${escapeHtml(s.name)}</div><div class="rank-meta">${s.qty} sold</div></div>
+            <div class="rank-amt num">${money(s.revenue)}</div>
+          </div>`).join('')}
+    </div>
+    <div class="panel">
+      <div style="padding:14px 16px;font-weight:700;font-size:14px;border-bottom:1px solid var(--line);">Low stock</div>
+      ${lowStock.length===0 ? `<div class="empty-state"><p>All items well stocked.</p></div>` :
+        lowStock.map(it=>`
+          <div class="low-stock-row"><div class="rank-name">${escapeHtml(it.name)}</div><span class="stock-badge ${it.stock<=3?'low':''}">${it.stock} left</span></div>
+        `).join('')}
+    </div>
+  </div>`;
+}
+
+/* ---------- Billing ---------- */
+function renderBilling(){
+  const q = state.search.trim().toLowerCase();
+  const items = DATA.inventory.filter(it => it.name.toLowerCase().includes(q));
+  const cartLines = state.cart.map(c => {
+    const item = DATA.inventory.find(i=>i.id===c.id);
+    return item ? {...item, qty:c.qty} : null;
+  }).filter(Boolean);
+
+  const gstOn = DATA.shop.gstEnabled;
+  const subtotal = cartLines.reduce((s,l)=> s + l.price*l.qty, 0);
+  const tax = gstOn ? cartLines.reduce((s,l)=> s + (l.price*l.qty*(l.gst||0)/100), 0) : 0;
+  const cgst = tax/2, sgst = tax/2;
+  const total = subtotal + tax;
+
+  const received = state.amountReceived === '' ? total : parseFloat(state.amountReceived);
+  const receivedSafe = isNaN(received) ? total : received;
+  const balanceDue = Math.max(0, total - receivedSafe);
+
+  return `
+  <div class="billing-grid">
+    <div class="panel panel-pad">
+      <div class="search-row"><input class="search-input" id="searchInput" placeholder="Search items to add…" value="${escapeAttr(state.search)}"></div>
+      ${items.length === 0 ? `
+        <div class="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+          <p>${DATA.inventory.length===0 ? 'No items in inventory yet.' : 'No items match your search.'}</p>
+          ${DATA.inventory.length===0 ? `<p>Go to <strong>Inventory</strong> to add your first item.</p>` : ''}
+        </div>` : `
+        <div class="item-grid">
+          ${items.map(it => `
+            <button class="item-card" data-add="${it.id}" ${it.stock<=0?'disabled':''}>
+              <div class="item-name">${escapeHtml(it.name)}</div>
+              <div class="item-price num">${money(it.price)}</div>
+              <div class="item-stock ${it.stock<=3?'low':''}">${it.stock<=0?'Out of stock':(it.stock + ' in stock')}</div>
+            </button>`).join('')}
+        </div>`}
+    </div>
+
+    <div class="panel">
+      <div class="cart-header"><div class="cart-title">Current bill</div><div class="cart-count">${cartLines.length} item${cartLines.length!==1?'s':''}</div></div>
+      <div class="cart-items">
+        ${cartLines.length===0 ? `<div class="cart-empty">Tap items on the left to add them here.</div>` :
+          cartLines.map(l => `
+            <div class="cart-line">
+              <div class="cart-line-info"><div class="cart-line-name">${escapeHtml(l.name)}</div><div class="cart-line-price num">${money(l.price)} each</div></div>
+              <div class="qty-control">
+                <button class="qty-btn" data-qty-dec="${l.id}">−</button>
+                <div class="qty-val num">${l.qty}</div>
+                <button class="qty-btn" data-qty-inc="${l.id}" ${l.qty>=l.stock?'disabled':''}>+</button>
+              </div>
+              <div class="line-total num">${money(l.price*l.qty)}</div>
+              <button class="remove-btn" data-remove="${l.id}">✕</button>
+            </div>`).join('')}
+      </div>
+      <div class="cart-footer">
+        <div class="field-label">Customer</div>
+        <div class="field-row">
+          <select id="customerSelect">
+            <option value="">Walk-in customer</option>
+            ${DATA.customers.map(c=>`<option value="${c.id}" ${state.customerId===c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field-label">Payment</div>
+        <div class="field-row">
+          <select id="paymentMode">
+            ${['Cash','Card','UPI','Other'].map(m=>`<option ${state.paymentMode===m?'selected':''}>${m}</option>`).join('')}
+          </select>
+          <input id="amountReceived" type="number" min="0" step="0.01" placeholder="Amount received" value="${state.amountReceived}" ${!state.customerId?'disabled':''}>
+        </div>
+        ${!state.customerId ? `<div class="hint">Select a customer to accept partial or credit (udhaar) payment.</div>` : (balanceDue>0 ? `<div class="hint">₹${balanceDue.toFixed(2)} will be added to this customer's due balance.</div>` : '')}
+
+        <div class="totals">
+          <div class="totals-row"><span>Subtotal</span><span class="num">${money(subtotal)}</span></div>
+          ${gstOn ? `
+          <div class="totals-row"><span>CGST</span><span class="num">${money(cgst)}</span></div>
+          <div class="totals-row"><span>SGST</span><span class="num">${money(sgst)}</span></div>` : ''}
+          <div class="totals-row grand"><span>Total</span><span class="num">${money(total)}</span></div>
+          ${state.customerId && balanceDue>0 ? `<div class="totals-row due"><span>Balance due</span><span class="num">${money(balanceDue)}</span></div>` : ''}
+        </div>
+        ${DATA.shop.upiId && total>0 ? `
+        <button class="upi-qr-btn" id="collectUpiBtn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM14 21h3M21 14v3M21 18v3"/></svg>
+          Collect ${money(receivedSafe)} via UPI QR
+        </button>` : ''}
+        <button class="generate-btn" id="generateBillBtn" ${cartLines.length===0?'disabled':''}>Generate &amp; print bill</button>
+        ${cartLines.length>0 ? `<button class="clear-btn" id="clearCartBtn">Clear bill</button>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- Inventory ---------- */
+function renderInventory(){
+  return `
+  <div class="inv-toolbar">
+    <div class="section-title" style="margin:0;">Inventory</div>
+    <button class="primary-btn" id="addItemBtn">+ Add item</button>
+  </div>
+  <div class="panel">
+    ${DATA.inventory.length===0 ? `<div class="empty-state"><p>No items yet.</p><p>Click <strong>Add item</strong> to start building your catalog.</p></div>` : `
+      <table>
+        <thead><tr><th>Item</th><th>HSN</th><th>Price</th><th>GST %</th><th>Stock</th><th></th></tr></thead>
+        <tbody>
+          ${DATA.inventory.map(it => `
+            <tr>
+              <td>${escapeHtml(it.name)}</td>
+              <td class="num">${escapeHtml(it.hsn||'—')}</td>
+              <td class="num">${money(it.price)}</td>
+              <td class="num">${it.gst||0}%</td>
+              <td><span class="stock-badge ${it.stock<=3?'low':''}">${it.stock}</span></td>
+              <td style="text-align:right;">
+                <button class="icon-btn" data-edit="${it.id}">Edit</button>
+                <button class="icon-btn danger" data-delete="${it.id}">Delete</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`}
+  </div>`;
+}
+
+/* ---------- Customers ---------- */
+function renderCustomers(){
+  return `
+  <div class="inv-toolbar">
+    <div class="section-title" style="margin:0;">Customers</div>
+    <button class="primary-btn" id="addCustomerBtn">+ Add customer</button>
+  </div>
+  <div class="panel">
+    ${DATA.customers.length===0 ? `<div class="empty-state"><p>No customers yet.</p><p>Add a customer to track their bills and dues (khata).</p></div>` :
+      DATA.customers.map(c=>{
+        const bal = customerBalance(c.id);
+        return `
+        <div class="cust-row" data-viewcustomer="${c.id}">
+          <div><div class="cust-name">${escapeHtml(c.name)}</div><div class="cust-meta">${escapeHtml(c.phone||'')}</div></div>
+          <div class="cust-balance ${bal>0?'due':'zero'}">${bal>0 ? money(bal)+' due' : 'Settled'}</div>
+        </div>`;
+      }).join('')}
+  </div>`;
+}
+
+function renderCustomerLedger(customer){
+  const c = DATA.customers.find(x=>x.id===customer.id) || customer;
+  const bills = DATA.bills.filter(b=>b.customerId===c.id).map(b=>({type:'bill', date:b.date, timestamp:b.timestamp, desc:`Bill #${b.number}`, debit:b.total, credit:b.amountPaid||0}));
+  const pays = DATA.payments.filter(p=>p.customerId===c.id).map(p=>({type:'payment', date:new Date(p.timestamp).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}), timestamp:p.timestamp, desc: p.note ? 'Payment — '+p.note : 'Payment received', debit:0, credit:p.amount}));
+  const ledger = [...bills, ...pays].sort((a,b)=>a.timestamp-b.timestamp);
+  const balance = customerBalance(c.id);
+
+  return `
+  <button class="btn-secondary" id="backFromCustomer" style="margin-bottom:16px;">← Back</button>
+  <div class="dash-grid" style="grid-template-columns:1fr;">
+    <div class="panel panel-pad" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="font-weight:800;font-size:18px;">${escapeHtml(c.name)}</div>
+        <div class="hint">${escapeHtml(c.phone||'')} ${c.address? '· '+escapeHtml(c.address):''}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="stat-label">Balance</div>
+        <div class="stat-value num" style="color:${balance>0?'var(--danger)':'var(--ink)'};">${money(balance)}</div>
+      </div>
+      ${balance>0 ? `<button class="primary-btn" id="receivePaymentBtn">Receive payment</button>` : ''}
+    </div>
+    <div class="panel">
+      <div style="padding:14px 16px;font-weight:700;font-size:14px;border-bottom:1px solid var(--line);">Transaction history</div>
+      ${ledger.length===0 ? `<div class="empty-state"><p>No transactions yet.</p></div>` :
+        ledger.map(l=>`
+          <div class="ledger-row">
+            <div><div class="ledger-desc">${l.desc}</div><div class="ledger-date">${l.date}</div></div>
+            <div class="ledger-amt ${l.debit>0?'debit':'credit'} num">${l.debit>0 ? '+'+money(l.debit) : '−'+money(l.credit)}</div>
+          </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ---------- Expenses ---------- */
+function renderExpenses(){
+  const sorted = [...DATA.expenses].sort((a,b)=>b.timestamp-a.timestamp);
+  const totalAll = DATA.expenses.reduce((s,e)=>s+e.amount,0);
+  return `
+  <div class="inv-toolbar">
+    <div class="section-title" style="margin:0;">Expenses</div>
+    <button class="primary-btn" id="addExpenseBtn">+ Add expense</button>
+  </div>
+  <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,220px));">
+    <div class="stat-card"><div class="stat-label">Total recorded</div><div class="stat-value num">${money(totalAll)}</div><div class="stat-sub">${DATA.expenses.length} entries</div></div>
+  </div>
+  <div class="panel">
+    ${sorted.length===0 ? `<div class="empty-state"><p>No expenses recorded yet.</p></div>` :
+      sorted.map(e=>`
+        <div class="exp-row">
+          <div><div class="exp-cat">${escapeHtml(e.category)}</div><div class="exp-meta">${e.date}${e.note? ' · '+escapeHtml(e.note):''}</div></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="exp-amt num">− ${money(e.amount)}</div>
+            <button class="icon-btn danger" data-delexpense="${e.id}">Delete</button>
+          </div>
+        </div>`).join('')}
+  </div>`;
+}
+
+/* ---------- History ---------- */
+function renderHistory(){
+  const bills = [...DATA.bills].reverse();
+  return `
+  <div class="section-title">Bill history</div>
+  <div class="panel">
+    ${bills.length===0 ? `<div class="empty-state"><p>No bills generated yet.</p></div>` :
+      bills.map(b => {
+        const status = b.balanceDue<=0 ? 'paid' : (b.amountPaid>0 ? 'partial' : 'due');
+        const statusLabel = status==='paid' ? 'Paid' : (status==='partial' ? 'Partial' : 'Due');
+        return `
+        <div class="bill-card" data-viewbill="${b.id}">
+          <div>
+            <div class="bill-id">Bill #${b.number} <span class="badge ${status}">${statusLabel}</span></div>
+            <div class="bill-meta">${b.date} · ${b.customerName ? escapeHtml(b.customerName)+' · ' : 'Walk-in · '}${b.paymentMode} · ${b.items.length} item${b.items.length!==1?'s':''}</div>
+          </div>
+          <div class="bill-amt num">${money(b.total)}</div>
+        </div>`;
+      }).join('')}
+  </div>`;
+}
+
+/* ---------- Receipt (GST invoice) ---------- */
+function renderReceipt(bill){
+  const gstOn = bill.gstEnabled;
+  return `
+  <button class="btn-secondary" id="backFromReceipt" style="margin-bottom:16px;">← Back</button>
+  <div id="receipt-view">
+    <div class="receipt-head">
+      <div class="receipt-shop">${escapeHtml(DATA.shop.name || 'My Shop')}</div>
+      <div class="receipt-addr">
+        ${DATA.shop.address ? escapeHtml(DATA.shop.address)+'<br>' : ''}
+        ${DATA.shop.phone ? 'Ph: '+escapeHtml(DATA.shop.phone)+' ' : ''}${gstOn && DATA.shop.gst ? 'GSTIN: '+escapeHtml(DATA.shop.gst) : ''}
+      </div>
+    </div>
+    <div class="receipt-meta"><span>Invoice #${bill.number}</span><span>${bill.date}</span></div>
+    ${bill.customerName ? `<div class="receipt-meta"><span>Customer</span><span>${escapeHtml(bill.customerName)}</span></div>` : ''}
+    <table class="receipt-table">
+      <thead><tr>
+        <th class="rt-name">Item</th>${gstOn?'<th>HSN</th>':''}<th>Qty</th><th>Rate</th>${gstOn?'<th>GST%</th>':''}<th style="text-align:right;">Amt</th>
+      </tr></thead>
+      <tbody>
+        ${bill.items.map(l => `
+          <tr>
+            <td class="rt-name">${escapeHtml(l.name)}</td>
+            ${gstOn?`<td class="num">${escapeHtml(l.hsn||'—')}</td>`:''}
+            <td class="num">${l.qty}</td>
+            <td class="num">${l.price.toFixed(2)}</td>
+            ${gstOn?`<td class="num">${l.gst||0}%</td>`:''}
+            <td class="num" style="text-align:right;">${(l.price*l.qty).toFixed(2)}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    <div class="receipt-totals">
+      <div class="totals-row"><span>Taxable value</span><span class="num">${money(bill.subtotal)}</span></div>
+      ${gstOn ? `
+      <div class="totals-row"><span>CGST</span><span class="num">${money(bill.cgst)}</span></div>
+      <div class="totals-row"><span>SGST</span><span class="num">${money(bill.sgst)}</span></div>` : ''}
+      <div class="totals-row grand"><span>Total</span><span class="num">${money(bill.total)}</span></div>
+      <div class="totals-row"><span>Amount paid</span><span class="num">${money(bill.amountPaid)}</span></div>
+      ${bill.balanceDue>0 ? `<div class="totals-row due"><span>Balance due</span><span class="num">${money(bill.balanceDue)}</span></div>` : ''}
+    </div>
+    <div class="receipt-foot">Paid via ${bill.paymentMode} · Thank you for shopping with us!</div>
+  </div>
+  <div class="receipt-actions">
+    <button class="btn-secondary" style="flex:1;" id="newBillBtn">Start new bill</button>
+    <button class="primary-btn" style="flex:1;justify-content:center;" id="printBillBtn">Print</button>
+  </div>
+  ${bill.balanceDue>0 && DATA.shop.upiId ? `
+  <div style="max-width:360px;margin:10px auto 0;">
+    <button class="upi-qr-btn" id="collectDueUpiBtn" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM14 21h3M21 14v3M21 18v3"/></svg>
+      Collect balance ${money(bill.balanceDue)} via UPI
+    </button>
+  </div>` : ''}`;
+}
+
+/* ---------- Modals ---------- */
+function renderItemModal(){
+  const it = state.editingItem || {name:'', price:'', gst:'', stock:'', hsn:''};
+  const isEdit = !!it.id;
+  return `
+  <div class="modal-overlay" id="itemModalOverlay">
+    <div class="modal">
+      <div class="modal-head"><h3>${isEdit?'Edit item':'Add item'}</h3><button class="modal-close" id="closeItemModal">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>Item name</label><input id="f-name" value="${escapeAttr(it.name)}" placeholder="e.g. Basmati Rice 1kg"></div>
+        <div class="form-row2">
+          <div class="form-group"><label>Price (₹)</label><input id="f-price" type="number" min="0" step="0.01" value="${it.price}"></div>
+          <div class="form-group"><label>GST %</label><input id="f-gst" type="number" min="0" step="0.01" value="${it.gst||0}"></div>
+        </div>
+        <div class="form-row2">
+          <div class="form-group"><label>Stock quantity</label><input id="f-stock" type="number" min="0" step="1" value="${it.stock}"></div>
+          <div class="form-group"><label>HSN code (optional)</label><input id="f-hsn" value="${escapeAttr(it.hsn||'')}" placeholder="e.g. 1006"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-secondary" id="cancelItemModal">Cancel</button>
+        <button class="primary-btn" id="saveItemModal">${isEdit?'Save changes':'Add item'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderSettingsModal(){
+  const s = DATA.shop;
+  return `
+  <div class="modal-overlay" id="settingsModalOverlay">
+    <div class="modal">
+      <div class="modal-head"><h3>Shop details</h3><button class="modal-close" id="closeSettingsModal">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>Shop name</label><input id="s-name" value="${escapeAttr(s.name)}"></div>
+        <div class="form-group"><label>Address</label><input id="s-address" value="${escapeAttr(s.address)}"></div>
+        <div class="form-row2">
+          <div class="form-group"><label>Phone</label><input id="s-phone" value="${escapeAttr(s.phone)}"></div>
+          <div class="form-group"><label>GSTIN</label><input id="s-gst" value="${escapeAttr(s.gst)}"></div>
+        </div>
+        <div class="form-group"><label>UPI ID (for QR payment collection)</label><input id="s-upi" value="${escapeAttr(s.upiId||'')}" placeholder="yourshop@upi"></div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="s-gstEnabled" style="width:auto;" ${s.gstEnabled?'checked':''}> Show GST (CGST+SGST) on bills
+          </label>
+          <div class="hint">Assumes intra-state sales — CGST and SGST are each half of the item's GST %.</div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-secondary" id="cancelSettingsModal">Cancel</button>
+        <button class="primary-btn" id="saveSettingsModal">Save</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderCustomerModal(){
+  const c = state.editingCustomer || {name:'', phone:'', address:''};
+  const isEdit = !!c.id;
+  return `
+  <div class="modal-overlay" id="customerModalOverlay">
+    <div class="modal">
+      <div class="modal-head"><h3>${isEdit?'Edit customer':'Add customer'}</h3><button class="modal-close" id="closeCustomerModal">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>Name</label><input id="c-name" value="${escapeAttr(c.name)}" placeholder="Customer name"></div>
+        <div class="form-group"><label>Phone</label><input id="c-phone" value="${escapeAttr(c.phone)}" placeholder="Phone number"></div>
+        <div class="form-group"><label>Address (optional)</label><input id="c-address" value="${escapeAttr(c.address)}"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-secondary" id="cancelCustomerModal">Cancel</button>
+        <button class="primary-btn" id="saveCustomerModal">${isEdit?'Save changes':'Add customer'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderExpenseModal(){
+  const today = new Date().toISOString().slice(0,10);
+  return `
+  <div class="modal-overlay" id="expenseModalOverlay">
+    <div class="modal">
+      <div class="modal-head"><h3>Add expense</h3><button class="modal-close" id="closeExpenseModal">✕</button></div>
+      <div class="modal-body">
+        <div class="form-row2">
+          <div class="form-group"><label>Category</label>
+            <select id="e-category">
+              ${['Purchase / Stock','Rent','Electricity','Salaries','Transport','Maintenance','Other'].map(c=>`<option>${c}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Amount (₹)</label><input id="e-amount" type="number" min="0" step="0.01" placeholder="0.00"></div>
+        </div>
+        <div class="form-group"><label>Date</label><input id="e-date" type="date" value="${today}"></div>
+        <div class="form-group"><label>Note (optional)</label><input id="e-note" placeholder="e.g. Supplier invoice #22"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-secondary" id="cancelExpenseModal">Cancel</button>
+        <button class="primary-btn" id="saveExpenseModal">Add expense</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderPaymentModal(){
+  const c = state.payingCustomer;
+  const bal = customerBalance(c.id);
+  return `
+  <div class="modal-overlay" id="paymentModalOverlay">
+    <div class="modal">
+      <div class="modal-head"><h3>Receive payment — ${escapeHtml(c.name)}</h3><button class="modal-close" id="closePaymentModal">✕</button></div>
+      <div class="modal-body">
+        <div class="hint" style="margin-bottom:10px;">Current balance due: <strong class="num">${money(bal)}</strong></div>
+        <div class="form-group"><label>Amount received (₹)</label><input id="p-amount" type="number" min="0" max="${bal}" step="0.01" value="${bal.toFixed(2)}"></div>
+        <div class="form-group"><label>Note (optional)</label><input id="p-note" placeholder="e.g. Paid via UPI"></div>
+        ${DATA.shop.upiId ? `<button type="button" class="upi-qr-btn" id="showPaymentUpiBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM14 21h3M21 14v3M21 18v3"/></svg>Show UPI QR for this amount</button>` : ''}
+      </div>
+      <div class="modal-foot">
+        <button class="btn-secondary" id="cancelPaymentModal">Cancel</button>
+        <button class="primary-btn" id="savePaymentModal">Record payment</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderUpiModal(){
+  const ctx = state.upiContext || {};
+  const amount = ctx.amount || 0;
+  return `
+  <div class="modal-overlay" id="upiModalOverlay">
+    <div class="modal">
+      <div class="modal-head"><h3>Scan to pay</h3><button class="modal-close" id="closeUpiModal">✕</button></div>
+      <div class="modal-body">
+        <div class="upi-qr-box">
+          <div id="upiQrCanvas"></div>
+          <div class="upi-amount num">${money(amount)}</div>
+          <div class="upi-payee">to ${escapeHtml(DATA.shop.upiId)} · ${escapeHtml(DATA.shop.name)}</div>
+        </div>
+        <div class="hint" style="text-align:center;margin-top:6px;">Customer scans this with any UPI app (GPay, PhonePe, Paytm). Confirm below once the payment shows in your account.</div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-secondary" id="cancelUpiModal">Not now</button>
+        <button class="primary-btn" id="confirmUpiModal">✓ Payment received</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function drawUpiQr(){
+  const el = document.getElementById('upiQrCanvas');
+  if(!el || !state.upiContext) return;
+  el.innerHTML = '';
+  const { amount, note } = state.upiContext;
+  const upiId = DATA.shop.upiId;
+  if(!upiId) return;
+  const link = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(DATA.shop.name||'Shop')}&am=${(amount||0).toFixed(2)}&cu=INR&tn=${encodeURIComponent(note||'Payment')}`;
+  try{
+    if(window.QRCode){
+      new QRCode(el, { text: link, width: 190, height: 190, correctLevel: QRCode.CorrectLevel.M });
+    }else{
+      el.innerHTML = '<div class="hint">QR library failed to load — ask the customer to pay to <strong>'+escapeHtml(upiId)+'</strong> directly.</div>';
+    }
+  }catch(e){
+    el.innerHTML = '<div class="hint">Could not generate QR. UPI ID: <strong>'+escapeHtml(upiId)+'</strong></div>';
+  }
+}
+
+
+function attachHandlers(){
+  document.querySelectorAll('[data-tab]').forEach(el=>{
+    el.onclick = ()=>{ state.tab = el.dataset.tab; state.viewingBill=null; state.viewingCustomer=null; render(); };
+  });
+  const openSettings = document.getElementById('openSettings');
+  if(openSettings) openSettings.onclick = ()=>{ state.showSettingsModal=true; render(); };
+
+  /* Billing */
+  const searchInput = document.getElementById('searchInput');
+  if(searchInput) searchInput.oninput = (e)=>{ state.search = e.target.value; renderKeepFocus('searchInput'); };
+  document.querySelectorAll('[data-add]').forEach(el=>{
+    el.onclick = ()=>{
+      const id = el.dataset.add;
+      const item = DATA.inventory.find(i=>i.id===id);
+      const existing = state.cart.find(c=>c.id===id);
+      const currentQty = existing ? existing.qty : 0;
+      if(item.stock <= currentQty){ showToast('No more stock available'); return; }
+      if(existing) existing.qty++; else state.cart.push({id, qty:1});
+      render();
+    };
+  });
+  document.querySelectorAll('[data-qty-inc]').forEach(el=>{
+    el.onclick = ()=>{
+      const id = el.dataset.qtyInc; const item = DATA.inventory.find(i=>i.id===id); const line = state.cart.find(c=>c.id===id);
+      if(line.qty >= item.stock){ showToast('Not enough stock'); return; }
+      line.qty++; render();
+    };
+  });
+  document.querySelectorAll('[data-qty-dec]').forEach(el=>{
+    el.onclick = ()=>{
+      const id = el.dataset.qtyDec; const line = state.cart.find(c=>c.id===id);
+      line.qty--; if(line.qty<=0) state.cart = state.cart.filter(c=>c.id!==id); render();
+    };
+  });
+  document.querySelectorAll('[data-remove]').forEach(el=>{
+    el.onclick = ()=>{ state.cart = state.cart.filter(c=>c.id!==el.dataset.remove); render(); };
+  });
+  const custSelect = document.getElementById('customerSelect');
+  if(custSelect) custSelect.onchange = (e)=>{
+    state.customerId = e.target.value;
+    if(!state.customerId) state.amountReceived = '';
+    render();
+  };
+  const payMode = document.getElementById('paymentMode');
+  if(payMode) payMode.onchange = (e)=>{ state.paymentMode = e.target.value; };
+  const amtReceived = document.getElementById('amountReceived');
+  if(amtReceived) amtReceived.oninput = (e)=>{ state.amountReceived = e.target.value; renderKeepFocus('amountReceived'); };
+  const clearBtn = document.getElementById('clearCartBtn');
+  if(clearBtn) clearBtn.onclick = ()=>{ state.cart=[]; state.customerId=''; state.amountReceived=''; render(); };
+  const genBtn = document.getElementById('generateBillBtn');
+  if(genBtn) genBtn.onclick = generateBill;
+  const collectUpiBtn = document.getElementById('collectUpiBtn');
+  if(collectUpiBtn) collectUpiBtn.onclick = ()=>{
+    const cartLines = state.cart.map(c => {
+      const item = DATA.inventory.find(i=>i.id===c.id);
+      return item ? {...item, qty:c.qty} : null;
+    }).filter(Boolean);
+    const gstOn = DATA.shop.gstEnabled;
+    const subtotal = cartLines.reduce((s,l)=> s + l.price*l.qty, 0);
+    const tax = gstOn ? cartLines.reduce((s,l)=> s + (l.price*l.qty*(l.gst||0)/100), 0) : 0;
+    const total = subtotal + tax;
+    const received = state.amountReceived === '' ? total : parseFloat(state.amountReceived);
+    const amount = isNaN(received) ? total : received;
+    state.upiContext = { amount, note: 'Bill #'+DATA.nextBillNo, source: 'billing' };
+    state.showUpiModal = true;
+    render();
+  };
+
+  /* Inventory */
+  const addItemBtn = document.getElementById('addItemBtn');
+  if(addItemBtn) addItemBtn.onclick = ()=>{ state.editingItem=null; state.showItemModal=true; render(); };
+  document.querySelectorAll('[data-edit]').forEach(el=>{
+    el.onclick = ()=>{ state.editingItem = DATA.inventory.find(i=>i.id===el.dataset.edit); state.showItemModal=true; render(); };
+  });
+  document.querySelectorAll('[data-delete]').forEach(el=>{
+    el.onclick = async ()=>{ DATA.inventory = DATA.inventory.filter(i=>i.id!==el.dataset.delete); await saveData(); render(); showToast('Item deleted'); };
+  });
+
+  /* Customers */
+  const addCustomerBtn = document.getElementById('addCustomerBtn');
+  if(addCustomerBtn) addCustomerBtn.onclick = ()=>{ state.editingCustomer=null; state.showCustomerModal=true; render(); };
+  document.querySelectorAll('[data-viewcustomer]').forEach(el=>{
+    el.onclick = ()=>{ state.viewingCustomer = DATA.customers.find(c=>c.id===el.dataset.viewcustomer); render(); };
+  });
+  const backFromCustomer = document.getElementById('backFromCustomer');
+  if(backFromCustomer) backFromCustomer.onclick = ()=>{ state.viewingCustomer=null; render(); };
+  const receivePaymentBtn = document.getElementById('receivePaymentBtn');
+  if(receivePaymentBtn) receivePaymentBtn.onclick = ()=>{ state.payingCustomer = state.viewingCustomer; state.showPaymentModal=true; render(); };
+
+  /* Expenses */
+  const addExpenseBtn = document.getElementById('addExpenseBtn');
+  if(addExpenseBtn) addExpenseBtn.onclick = ()=>{ state.showExpenseModal=true; render(); };
+  document.querySelectorAll('[data-delexpense]').forEach(el=>{
+    el.onclick = async ()=>{ DATA.expenses = DATA.expenses.filter(e=>e.id!==el.dataset.delexpense); await saveData(); render(); showToast('Expense deleted'); };
+  });
+
+  /* History */
+  document.querySelectorAll('[data-viewbill]').forEach(el=>{
+    el.onclick = ()=>{ state.viewingBill = DATA.bills.find(b=>b.id===el.dataset.viewbill); render(); };
+  });
+  const backBtn = document.getElementById('backFromReceipt');
+  if(backBtn) backBtn.onclick = ()=>{ state.viewingBill=null; render(); };
+  const newBillBtn = document.getElementById('newBillBtn');
+  if(newBillBtn) newBillBtn.onclick = ()=>{ state.viewingBill=null; state.tab='billing'; render(); };
+  const printBtn = document.getElementById('printBillBtn');
+  if(printBtn) printBtn.onclick = ()=>{ window.print(); };
+  const collectDueUpiBtn = document.getElementById('collectDueUpiBtn');
+  if(collectDueUpiBtn) collectDueUpiBtn.onclick = ()=>{
+    state.upiContext = { amount: state.viewingBill.balanceDue, note: 'Bill #'+state.viewingBill.number+' balance', source: 'due' };
+    state.showUpiModal = true;
+    render();
+  };
+
+  /* Item modal */
+  const closeItemModal = document.getElementById('closeItemModal');
+  const cancelItemModal = document.getElementById('cancelItemModal');
+  [closeItemModal, cancelItemModal].forEach(b=>{ if(b) b.onclick = ()=>{ state.showItemModal=false; render(); }; });
+  const overlay = document.getElementById('itemModalOverlay');
+  if(overlay) overlay.onclick = (e)=>{ if(e.target===overlay){ state.showItemModal=false; render(); } };
+  const saveItemModal = document.getElementById('saveItemModal');
+  if(saveItemModal) saveItemModal.onclick = async ()=>{
+    const name = document.getElementById('f-name').value.trim();
+    const price = parseFloat(document.getElementById('f-price').value);
+    const gst = parseFloat(document.getElementById('f-gst').value) || 0;
+    const stock = parseInt(document.getElementById('f-stock').value);
+    const hsn = document.getElementById('f-hsn').value.trim();
+    if(!name || isNaN(price) || price<0 || isNaN(stock) || stock<0){ showToast('Please fill in valid item details'); return; }
+    if(state.editingItem){
+      const it = DATA.inventory.find(i=>i.id===state.editingItem.id);
+      Object.assign(it, {name, price, gst, stock, hsn});
+    }else{
+      DATA.inventory.push({id: uid(), name, price, gst, stock, hsn});
+    }
+    await saveData(); state.showItemModal=false; state.editingItem=null; render(); showToast('Item saved');
+  };
+
+  /* Settings modal */
+  const closeSettingsModal = document.getElementById('closeSettingsModal');
+  const cancelSettingsModal = document.getElementById('cancelSettingsModal');
+  [closeSettingsModal, cancelSettingsModal].forEach(b=>{ if(b) b.onclick = ()=>{ state.showSettingsModal=false; render(); }; });
+  const sOverlay = document.getElementById('settingsModalOverlay');
+  if(sOverlay) sOverlay.onclick = (e)=>{ if(e.target===sOverlay){ state.showSettingsModal=false; render(); } };
+  const saveSettingsModal = document.getElementById('saveSettingsModal');
+  if(saveSettingsModal) saveSettingsModal.onclick = async ()=>{
+    DATA.shop.name = document.getElementById('s-name').value.trim() || 'My Shop';
+    DATA.shop.address = document.getElementById('s-address').value.trim();
+    DATA.shop.phone = document.getElementById('s-phone').value.trim();
+    DATA.shop.gst = document.getElementById('s-gst').value.trim();
+    DATA.shop.upiId = document.getElementById('s-upi').value.trim();
+    DATA.shop.gstEnabled = document.getElementById('s-gstEnabled').checked;
+    await saveData(); state.showSettingsModal=false; render(); showToast('Shop details saved');
+  };
+
+  /* Customer modal */
+  const closeCustomerModal = document.getElementById('closeCustomerModal');
+  const cancelCustomerModal = document.getElementById('cancelCustomerModal');
+  [closeCustomerModal, cancelCustomerModal].forEach(b=>{ if(b) b.onclick = ()=>{ state.showCustomerModal=false; render(); }; });
+  const cOverlay = document.getElementById('customerModalOverlay');
+  if(cOverlay) cOverlay.onclick = (e)=>{ if(e.target===cOverlay){ state.showCustomerModal=false; render(); } };
+  const saveCustomerModal = document.getElementById('saveCustomerModal');
+  if(saveCustomerModal) saveCustomerModal.onclick = async ()=>{
+    const name = document.getElementById('c-name').value.trim();
+    const phone = document.getElementById('c-phone').value.trim();
+    const address = document.getElementById('c-address').value.trim();
+    if(!name){ showToast('Please enter a customer name'); return; }
+    if(state.editingCustomer){
+      const c = DATA.customers.find(x=>x.id===state.editingCustomer.id);
+      Object.assign(c, {name, phone, address});
+    }else{
+      DATA.customers.push({id: uid(), name, phone, address});
+    }
+    await saveData(); state.showCustomerModal=false; state.editingCustomer=null; render(); showToast('Customer saved');
+  };
+
+  /* Expense modal */
+  const closeExpenseModal = document.getElementById('closeExpenseModal');
+  const cancelExpenseModal = document.getElementById('cancelExpenseModal');
+  [closeExpenseModal, cancelExpenseModal].forEach(b=>{ if(b) b.onclick = ()=>{ state.showExpenseModal=false; render(); }; });
+  const eOverlay = document.getElementById('expenseModalOverlay');
+  if(eOverlay) eOverlay.onclick = (e)=>{ if(e.target===eOverlay){ state.showExpenseModal=false; render(); } };
+  const saveExpenseModal = document.getElementById('saveExpenseModal');
+  if(saveExpenseModal) saveExpenseModal.onclick = async ()=>{
+    const category = document.getElementById('e-category').value;
+    const amount = parseFloat(document.getElementById('e-amount').value);
+    const dateStr = document.getElementById('e-date').value;
+    const note = document.getElementById('e-note').value.trim();
+    if(isNaN(amount) || amount<=0){ showToast('Please enter a valid amount'); return; }
+    const ts = dateStr ? new Date(dateStr).getTime() : Date.now();
+    DATA.expenses.push({id: uid(), category, amount, note, timestamp: ts, date: new Date(ts).toLocaleDateString('en-IN',{dateStyle:'medium'})});
+    await saveData(); state.showExpenseModal=false; render(); showToast('Expense added');
+  };
+
+  /* Payment modal */
+  const closePaymentModal = document.getElementById('closePaymentModal');
+  const cancelPaymentModal = document.getElementById('cancelPaymentModal');
+  [closePaymentModal, cancelPaymentModal].forEach(b=>{ if(b) b.onclick = ()=>{ state.showPaymentModal=false; render(); }; });
+  const pOverlay = document.getElementById('paymentModalOverlay');
+  if(pOverlay) pOverlay.onclick = (e)=>{ if(e.target===pOverlay){ state.showPaymentModal=false; render(); } };
+  const savePaymentModal = document.getElementById('savePaymentModal');
+  if(savePaymentModal) savePaymentModal.onclick = async ()=>{
+    const amount = parseFloat(document.getElementById('p-amount').value);
+    const note = document.getElementById('p-note').value.trim();
+    if(isNaN(amount) || amount<=0){ showToast('Please enter a valid amount'); return; }
+    DATA.payments.push({id: uid(), customerId: state.payingCustomer.id, amount, note, timestamp: Date.now()});
+    await saveData();
+    state.showPaymentModal=false;
+    state.viewingCustomer = DATA.customers.find(c=>c.id===state.payingCustomer.id);
+    render(); showToast('Payment recorded');
+  };
+  const showPaymentUpiBtn = document.getElementById('showPaymentUpiBtn');
+  if(showPaymentUpiBtn) showPaymentUpiBtn.onclick = ()=>{
+    const amount = parseFloat(document.getElementById('p-amount').value) || 0;
+    state.upiContext = { amount, note: 'Payment — '+state.payingCustomer.name, source: 'payment' };
+    state.showUpiModal = true;
+    render();
+  };
+
+  /* UPI modal */
+  const closeUpiModal = document.getElementById('closeUpiModal');
+  const cancelUpiModal = document.getElementById('cancelUpiModal');
+  [closeUpiModal, cancelUpiModal].forEach(b=>{ if(b) b.onclick = ()=>{ state.showUpiModal=false; render(); }; });
+  const uOverlay = document.getElementById('upiModalOverlay');
+  if(uOverlay) uOverlay.onclick = (e)=>{ if(e.target===uOverlay){ state.showUpiModal=false; render(); } };
+  const confirmUpiModal = document.getElementById('confirmUpiModal');
+  if(confirmUpiModal) confirmUpiModal.onclick = async ()=>{
+    const ctx = state.upiContext || {};
+    if(ctx.source === 'billing'){
+      state.amountReceived = (ctx.amount||0).toFixed(2);
+      state.paymentMode = 'UPI';
+    }else if(ctx.source === 'payment'){
+      const pAmt = document.getElementById('p-amount');
+      if(pAmt) pAmt.value = (ctx.amount||0).toFixed(2);
+    }else if(ctx.source === 'due'){
+      const bill = state.viewingBill;
+      if(bill && bill.customerId && ctx.amount>0){
+        DATA.payments.push({id: uid(), customerId: bill.customerId, amount: ctx.amount, note: ctx.note, timestamp: Date.now()});
+        await saveData();
+      }
+    }
+    state.showUpiModal = false;
+    render();
+    showToast('Marked as received via UPI');
+  };
+}
+
+function renderKeepFocus(id){
+  const el0 = document.getElementById(id);
+  const cursorPos = el0 ? el0.selectionStart : null;
+  render();
+  const el = document.getElementById(id);
+  if(el && cursorPos!==null){ el.focus(); el.setSelectionRange(cursorPos,cursorPos); }
+}
+
+async function generateBill(){
+  const cartLines = state.cart.map(c => {
+    const item = DATA.inventory.find(i=>i.id===c.id);
+    return item ? {name:item.name, price:item.price, gst:item.gst||0, hsn:item.hsn||'', qty:c.qty, id:item.id} : null;
+  }).filter(Boolean);
+  if(cartLines.length===0) return;
+
+  const gstOn = DATA.shop.gstEnabled;
+  const subtotal = cartLines.reduce((s,l)=> s + l.price*l.qty, 0);
+  const tax = gstOn ? cartLines.reduce((s,l)=> s + (l.price*l.qty*(l.gst||0)/100), 0) : 0;
+  const cgst = tax/2, sgst = tax/2;
+  const total = subtotal + tax;
+
+  const customer = state.customerId ? DATA.customers.find(c=>c.id===state.customerId) : null;
+  let amountPaid = state.amountReceived === '' ? total : parseFloat(state.amountReceived);
+  if(isNaN(amountPaid)) amountPaid = total;
+  if(!customer) amountPaid = total; // walk-in must pay in full
+  amountPaid = Math.max(0, Math.min(amountPaid, total));
+  const balanceDue = Math.round((total - amountPaid)*100)/100;
+
+  const bill = {
+    id: uid(),
+    number: DATA.nextBillNo,
+    timestamp: Date.now(),
+    date: new Date().toLocaleString('en-IN', {dateStyle:'medium', timeStyle:'short'}),
+    customerId: customer ? customer.id : null,
+    customerName: customer ? customer.name : '',
+    paymentMode: state.paymentMode,
+    items: cartLines,
+    subtotal, tax, cgst, sgst, total,
+    amountPaid, balanceDue,
+    gstEnabled: gstOn
+  };
+
+  cartLines.forEach(l=>{
+    const it = DATA.inventory.find(i=>i.id===l.id);
+    if(it) it.stock = Math.max(0, it.stock - l.qty);
+  });
+
+  DATA.bills.push(bill);
+  DATA.nextBillNo += 1;
+  await saveData();
+
+  state.cart = []; state.customerId = ''; state.amountReceived = ''; state.paymentMode = 'Cash';
+  state.viewingBill = bill;
+  render();
+  setTimeout(()=>{ window.print(); }, 300);
+}
+
+/* ============ Utils ============ */
+function escapeHtml(str){
+  return String(str||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function escapeAttr(str){ return escapeHtml(str); }
+
+/* ============ Init ============ */
+(async function init(){
+  await loadData();
+  render();
+  setInterval(async ()=>{
+    if(state.showItemModal || state.showSettingsModal || state.showCustomerModal || state.showExpenseModal || state.showPaymentModal) return;
+    const before = JSON.stringify(DATA);
+    await loadData();
+    if(JSON.stringify(DATA) !== before) render();
+  }, 5000);
+})();
+</script>
+</body>
+</html>
