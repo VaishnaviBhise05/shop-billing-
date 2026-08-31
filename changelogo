@@ -1,0 +1,34 @@
+# Changelog
+
+All notable changes to this project are logged here, day by day.
+
+## Day 1 — 2026-08-30
+### Added
+- `index.html` — the complete billing app in a single file:
+  - **Billing** — search, add items to cart, live total, generate & print bill
+  - **Inventory** — items with price, GST %, HSN code, and stock (auto-deducted on sale)
+  - **GST invoices** — CGST + SGST split, toggleable in Settings
+  - **Customers (Khata/Udhaar)** — customer records with running balance; full, partial, and credit payments
+  - **UPI QR payments** — live QR code generated per bill or due amount for real UPI payment collection
+  - **Expenses** — log shop expenses by category
+  - **Dashboard** — today's revenue, expenses, net, items sold, top sellers, low-stock alerts (live-updating)
+  - **History** — every bill saved and reprintable
+- `README.md` — setup guide, project structure, and day-wise contribution log
+
+## Day 2 — 2026-08-30
+### Added
+- `CHANGELOG.md` — this file, tracking day-wise history
+
+## Day 3 — 2026-08-30
+### Added
+- `style.css` — all CSS extracted from `index.html` into its own file for cleaner code organization
+### Changed
+- `index.html` — inline `<style>` block replaced with `<link rel="stylesheet" href="style.css">`
+
+## Day 4 — TBD
+### Planned
+- `app.js` — JavaScript logic extracted from `index.html` into its own file
+
+---
+
+_Each entry above is added the same day a file is added to the project — see `README.md` for the matching Day-wise Log table._
