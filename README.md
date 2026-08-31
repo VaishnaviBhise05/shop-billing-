@@ -34,8 +34,8 @@ As new files are added (app.js, backup.js, PWA files, etc.), they'll be listed h
 |-----|------|------------|---------------|
 | Day 1 | 2026-08-30 | `index.html` | Complete billing app: cart & billing, inventory, GST invoices, customer khata, UPI QR payments, expenses, dashboard, and history — all in one file. |
 | Day 1 | 2026-08-30 | `README.md` | Setup guide, project structure, and this day-wise log. |
-| Day 2 | 2026-08-30 | `CHANGELOG.md` | Detailed day-by-day changelog of everything added to the project. |
-| Day 3 | 2026-08-30 | `style.css` | All CSS extracted out of `index.html` into its own file; `index.html` now links to it. |
+| Day 2 | 2026-08-31 | `CHANGELOG.md` | Detailed day-by-day changelog of everything added to the project. |
+| Day 3 | 2026-08-31 | `style.css` | All CSS extracted out of `index.html` into its own file; `index.html` now links to it. |
 
 _This table will be updated each day as new files are added to the project._
 
