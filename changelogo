@@ -2,7 +2,7 @@
 
 All notable changes to this project are logged here, day by day.
 
-## Day 1 — 2026-08-30
+## Day 1 — 2026-08-29
 ### Added
 - `index.html` — the complete billing app in a single file:
   - **Billing** — search, add items to cart, live total, generate & print bill
@@ -19,15 +19,21 @@ All notable changes to this project are logged here, day by day.
 ### Added
 - `CHANGELOG.md` — this file, tracking day-wise history
 
-## Day 3 — 2026-08-30
+## Day 3 — 2026-08-31
 ### Added
 - `style.css` — all CSS extracted from `index.html` into its own file for cleaner code organization
 ### Changed
 - `index.html` — inline `<style>` block replaced with `<link rel="stylesheet" href="style.css">`
 
-## Day 4 — TBD
+## Day 4 — 2026-09-01
+### Added
+- `app.js` — all JavaScript logic extracted from `index.html` into its own file
+### Changed
+- `index.html` — inline `<script>` block replaced with `<script src="app.js"></script>`; the file is now pure markup (18 lines)
+
+## Day 5 — TBD
 ### Planned
-- `app.js` — JavaScript logic extracted from `index.html` into its own file
+- `backup.js` — export/import all shop data as a `.json` file for safekeeping
 
 ---
 
