@@ -20,22 +20,24 @@ This repo is built incrementally, one file at a time. Current structure:
 ```
 shop-billing/
 │
-├── index.html       # App markup + JS logic — open this to run it
-├── style.css         # All styling, extracted from index.html
+├── index.html       # App markup only — links style.css and app.js
+├── style.css         # All styling
+├── app.js             # All JavaScript logic
 ├── README.md         # This file
 └── CHANGELOG.md       # Day-wise history of what was added and when
 ```
 
-As new files are added (app.js, backup.js, PWA files, etc.), they'll be listed here and in the Day-wise Log below.
+As new files are added (backup.js, PWA files, etc.), they'll be listed here and in the Day-wise Log below.
 
 ## Day-wise Log
 
 | Day | Date | File Added | What it does |
 |-----|------|------------|---------------|
-| Day 1 | 2026-08-30 | `index.html` | Complete billing app: cart & billing, inventory, GST invoices, customer khata, UPI QR payments, expenses, dashboard, and history — all in one file. |
-| Day 1 | 2026-08-30 | `README.md` | Setup guide, project structure, and this day-wise log. |
-| Day 2 | 2026-08-31 | `CHANGELOG.md` | Detailed day-by-day changelog of everything added to the project. |
-| Day 3 | 2026-08-31 | `style.css` | All CSS extracted out of `index.html` into its own file; `index.html` now links to it. |
+| Day 1 | 2026-08-29 | `index.html` | Complete billing app: cart & billing, inventory, GST invoices, customer khata, UPI QR payments, expenses, dashboard, and history — all in one file. |
+| Day 1 | 2026-08-29 | `README.md` | Setup guide, project structure, and this day-wise log. |
+| Day 2 | 2026-08-30 | `CHANGELOG.md` | Detailed day-by-day changelog of everything added to the project. |
+| Day 3 | 2026-08-31 | `style.css` | All CSS extracted out of `index.html` into its own file; `index.html` updated to link it. |
+| Day 4 | 2026-09-01 | `app.js` | All JavaScript logic extracted out of `index.html` into its own file; `index.html` updated again — now pure markup. |
 
 _This table will be updated each day as new files are added to the project._
 
