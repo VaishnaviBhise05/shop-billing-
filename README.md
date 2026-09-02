@@ -1,6 +1,6 @@
-# Counter — Shop Billing App
+# Counter Shop Billing App
 
-A simple, all-in-one billing app for shop counters. Add items to a cart, generate a bill instantly, print it, and keep track of inventory, customers, dues, and expenses — all from a single HTML file with no installation and no backend server required.
+A simple, all-in-one billing app for shop counters. Add items to a cart, generate a bill instantly, print it, and keep track of inventory, customers, dues, and expenses all from a single HTML file with no installation and no backend server required.
 
 ## Features
 
