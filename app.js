@@ -494,6 +494,15 @@ function renderSettingsModal(){
           </label>
           <div class="hint">Assumes intra-state sales — CGST and SGST are each half of the item's GST %.</div>
         </div>
+        <div class="form-group" style="border-top:1px solid var(--line);padding-top:14px;margin-top:4px;">
+          <label>Backup &amp; restore</label>
+          <div class="hint" style="margin-bottom:8px;">Save all your data (inventory, bills, customers, expenses) as a file, or restore from a previous backup.</div>
+          <div style="display:flex;gap:8px;">
+            <button type="button" class="btn-secondary" id="downloadBackupBtn" style="flex:1;">⬇ Download backup</button>
+            <button type="button" class="btn-secondary" id="restoreBackupBtn" style="flex:1;">⬆ Restore backup</button>
+          </div>
+          <input type="file" id="restoreFileInput" accept="application/json" style="display:none;">
+        </div>
       </div>
       <div class="modal-foot">
         <button class="btn-secondary" id="cancelSettingsModal">Cancel</button>
@@ -765,6 +774,12 @@ function attachHandlers(){
     DATA.shop.gstEnabled = document.getElementById('s-gstEnabled').checked;
     await saveData(); state.showSettingsModal=false; render(); showToast('Shop details saved');
   };
+  const downloadBackupBtn = document.getElementById('downloadBackupBtn');
+  if(downloadBackupBtn) downloadBackupBtn.onclick = ()=>{ if(window.downloadBackup) window.downloadBackup(); };
+  const restoreBackupBtn = document.getElementById('restoreBackupBtn');
+  const restoreFileInput = document.getElementById('restoreFileInput');
+  if(restoreBackupBtn && restoreFileInput) restoreBackupBtn.onclick = ()=>{ restoreFileInput.click(); };
+  if(restoreFileInput) restoreFileInput.onchange = (e)=>{ if(window.handleRestoreFile) window.handleRestoreFile(e); };
 
   /* Customer modal */
   const closeCustomerModal = document.getElementById('closeCustomerModal');
