@@ -1,6 +1,6 @@
-# Counter Shop Billing App
+# Counter — Shop Billing App
 
-A simple, all-in-one billing app for shop counters. Add items to a cart, generate a bill instantly, print it, and keep track of inventory, customers, dues, and expenses all from a single HTML file with no installation and no backend server required.
+A simple, all-in-one billing app for shop counters. Add items to a cart, generate a bill instantly, print it, and keep track of inventory, customers, dues, and expenses — all from a single HTML file with no installation and no backend server required.
 
 ## Features
 
@@ -20,14 +20,15 @@ This repo is built incrementally, one file at a time. Current structure:
 ```
 shop-billing/
 │
-├── index.html       # App markup only — links style.css and app.js
+├── index.html       # App markup only — links style.css, app.js, backup.js
 ├── style.css         # All styling
-├── app.js             # All JavaScript logic
+├── app.js             # Core app logic (billing, inventory, customers, expenses, dashboard)
+├── backup.js           # Export/import all data as a .json backup file
 ├── README.md         # This file
 └── CHANGELOG.md       # Day-wise history of what was added and when
 ```
 
-As new files are added (backup.js, PWA files, etc.), they'll be listed here and in the Day-wise Log below.
+As new files are added (PWA files, etc.), they'll be listed here and in the Day-wise Log below.
 
 ## Day-wise Log
 
@@ -38,6 +39,7 @@ As new files are added (backup.js, PWA files, etc.), they'll be listed here and 
 | Day 2 | 2026-08-30 | `CHANGELOG.md` | Detailed day-by-day changelog of everything added to the project. |
 | Day 3 | 2026-08-31 | `style.css` | All CSS extracted out of `index.html` into its own file; `index.html` updated to link it. |
 | Day 4 | 2026-09-01 | `app.js` | All JavaScript logic extracted out of `index.html` into its own file; `index.html` updated again — now pure markup. |
+| Day 5 | 2026-09-02 | `backup.js` | New feature: "Download backup" and "Restore backup" buttons in Settings, to export/import all shop data as a `.json` file. |
 
 _This table will be updated each day as new files are added to the project._
 
