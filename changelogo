@@ -31,9 +31,18 @@ All notable changes to this project are logged here, day by day.
 ### Changed
 - `index.html` — inline `<script>` block replaced with `<script src="app.js"></script>`; the file is now pure markup (18 lines)
 
-## Day 5 — TBD
+## Day 5 — 2026-09-02
+### Added
+- `backup.js` — export/import feature:
+  - "Download backup" button (in Settings) saves all data — inventory, bills, customers, payments, expenses, shop settings — as a timestamped `.json` file
+  - "Restore backup" button lets you pick a previously downloaded `.json` file and reload it, after a confirmation prompt (since it replaces all current data)
+### Changed
+- `index.html` — added `<script src="backup.js"></script>`
+- `app.js` — Settings modal now has a "Backup & restore" section wired to the new functions
+
+## Day 6 — TBD
 ### Planned
-- `backup.js` — export/import all shop data as a `.json` file for safekeeping
+- `manifest.json` + `sw.js` — makes the app installable as a home-screen icon (PWA)
 
 ---
 
