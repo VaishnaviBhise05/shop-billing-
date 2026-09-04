@@ -20,15 +20,19 @@ This repo is built incrementally, one file at a time. Current structure:
 ```
 shop-billing/
 │
-├── index.html       # App markup only — links style.css, app.js, backup.js
+├── index.html       # App markup — links style.css, app.js, backup.js, manifest.json
 ├── style.css         # All styling
-├── app.js             # Core app logic (billing, inventory, customers, expenses, dashboard)
+├── app.js             # Core app logic (billing, inventory, customers, expenses, dashboard, SW registration)
 ├── backup.js           # Export/import all data as a .json backup file
+├── manifest.json        # Web app manifest — makes the app installable
+├── sw.js                # Service worker — offline caching for the app shell
+├── icon-192.png          # App icon (192x192)
+├── icon-512.png          # App icon (512x512)
 ├── README.md         # This file
 └── CHANGELOG.md       # Day-wise history of what was added and when
 ```
 
-As new files are added (PWA files, etc.), they'll be listed here and in the Day-wise Log below.
+As new files are added, they'll be listed here and in the Day-wise Log below.
 
 ## Day-wise Log
 
@@ -40,6 +44,7 @@ As new files are added (PWA files, etc.), they'll be listed here and in the Day-
 | Day 3 | 2026-08-31 | `style.css` | All CSS extracted out of `index.html` into its own file; `index.html` updated to link it. |
 | Day 4 | 2026-09-01 | `app.js` | All JavaScript logic extracted out of `index.html` into its own file; `index.html` updated again — now pure markup. |
 | Day 5 | 2026-09-02 | `backup.js` | New feature: "Download backup" and "Restore backup" buttons in Settings, to export/import all shop data as a `.json` file. |
+| Day 6 | 2026-09-03 | `manifest.json`, `sw.js`, `icon-192.png`, `icon-512.png` | Makes the app installable on a phone's home screen (PWA) and lets it work offline via a service worker cache. |
 
 _This table will be updated each day as new files are added to the project._
 
